@@ -1,0 +1,310 @@
+
+
+
+import { AfterViewInit, Component, ViewChild, ViewEncapsulation } from '@angular/core';
+
+import { HttpErrorResponse } from '@angular/common/http';
+
+// import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
+
+import { MatDialog, MatPaginator, MatSort, MatTableDataSource } from '@angular/material';
+import { FormControl } from '@angular/forms';
+
+
+import { HttpService } from '../services/http.service';
+import { MainProcessorService } from '../services/processors/main-processor.service';
+
+
+import { ConfirmService } from '../services/confirm-dialog/confirm.service';
+import { MessagesService } from '../services/messages-service/messages.service';
+
+import { DataModel } from './data.model';
+
+import { ViewDataComponent } from './view-data/view-data.component';
+import { AddDaraComponent } from './add-data/add-data.component';
+import { EditDataComponent } from './edit-data/edit-data.component';
+import { countries } from '../shared/countries-list';
+
+
+
+
+
+
+
+@Component({
+  selector: 'app-datas',
+  templateUrl: './datas.component.html',
+  encapsulation: ViewEncapsulation.None,
+})
+
+
+
+export class DatasComponent implements AfterViewInit {
+
+  // For delete confirm dialog in deleteItem to match the db column name to fetch.
+  private name1 = 'first_name';
+  private name2 = 'last_name';
+
+
+  // For CRUD functions in dialogs.
+  private viewDataComponent = ViewDataComponent;
+  private addDataComponent = AddDataComponent;
+  private editDataComponent = EditDataComponent;
+
+  // Column name needed by updateDataTable() so it can accept whatever column is needed.
+  private idColumn = 'Data_id';  // Change for other sections of app.
+
+
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
+
+
+  // Set params to query appropriate table in db requests from tags-section child.
+  // @Input() on child tags-section.
+  private dbTable = 'datas';  // db request in http service for the main component.
+  private column = 'skill_id_array';
+  private lastNameCol = 'last_name';
+
+  // For category tags query @Input.  Used by injected component.
+  private categoryTable = 'data_categories';
+  // For subcategory tags query @Input.  Used by injected component.
+  private subCategoryTable = 'skills';
+
+  //  For data table operations.
+  private dataSource = new MatTableDataSource();
+  public dataLength: number;
+
+  // For replacing skill_id's with skill_name's in the targetProperty.
+  private dropDownTable = 'skills';
+  private targetProperty = 'skill_id_array';
+  private targetElementId = 'skill_id';
+  private targetElementName = 'skill_name';
+
+  private dialogRef;
+
+  // For the countries search dropdown.
+  private countries = countries;
+  private country: string;
+  private countriesControl = new FormControl('');
+  private countryColumn = 'country';
+
+  private idArray: number[] = [];  // Create array for checkbox selection in table.
+  private dataArray = [];
+
+  private displayedColumns = [
+    'select',
+    'firstName',
+    'lastName',
+    'userName',
+    'pitch',
+    'mainSkillTitle',
+    'skills',
+    'skillsComments',
+    'dataStatus',
+    'options'
+  ];
+
+  // For last name query
+  private searchTerm$ = new Subject<string>();
+
+
+
+  // Processor services make common code available to all sections of the app - DRY
+
+  constructor(
+    public dialog: MatDialog,
+    private httpService: HttpService,
+    private confirmService: ConfirmService,
+    private messagesService: MessagesService,
+    private mainProcessorService: MainProcessorService,
+    ) {
+
+    //  --------- LAST NAME INCREMENTAL QUERY ---------------
+    const column = 'last_name';
+    this.httpService.nameSearch(this.dbTable, column, this.searchTerm$)
+      .subscribe(data => {
+        this.dataLength = data.length;
+        console.log('5 data: ', data);
+        this.dataSource.data = data;
+      });
+  }
+
+
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+  }
+
+
+  // ------------------ CRUD SECTION --------------------
+
+
+
+  // ----------------- GET ALL ------------------
+
+  private getAllRecords(): any {
+    this.httpService.getAllRecords(this.dbTable)
+      .subscribe(data => {
+        this.mainProcessorService.getListData(
+          data, this.dropDownTable, this.targetProperty, this.targetElementId, this.targetElementName);
+        this.dataLength = data.length;
+        this.dataSource.data = data;
+        },
+        (err: HttpErrorResponse) => {
+          console.log(err.error);
+          console.log(err.message);
+          this.messagesService.openDialog('Error mc-1', 'Database access error.');
+        });
+  }
+
+
+
+  //  ---------------- VIEW PROFILE. ---------------
+
+  private viewProfile(recordId) {
+    this.dialogRef = this.dialog.open(this.viewDataComponent, {
+      data: {recordId: recordId}
+    });
+    this.dialogRef.afterClosed()
+      .subscribe(result => result);
+  }
+
+
+  // ------------------ ADD --------------------
+
+  private addRecord() {
+    this.dialog.open(this.addDataComponent);
+  }
+
+
+  // ----------- EDIT & UPDATE --------------
+
+  private editRecord(recordId) {
+    this.dialogRef = this.dialog.open(this.editDataComponent, {
+      data: {recordId: recordId, idColumn: this.idColumn, paginator: this.paginator, dataSource: this.dataSource}
+    });
+    this.dialogRef.afterClosed()
+      .subscribe(result => {
+      });
+  }
+
+
+  // --------------- DELETE ------------------
+
+  private deleteRecord(recordId) {
+    return this.mainProcessorService.deleteRecord(
+      this.dbTable,
+      recordId,
+      this.idColumn,
+      this.name1,
+      this.name2,
+      this.paginator,
+      this.dataSource
+    );
+  }
+
+
+  //   ------------------  QUERIES ---------------------------
+
+
+  // ----------- FILTER TABLE ------------------
+
+
+  private applyFilter(filterValue: string) {
+    return this.mainProcessorService.applyFilter(
+      filterValue,
+      this.dataSource
+    );
+  }
+
+
+  //  --------- LAST NAME INCREMENTAL QUERY IN CONSTRUCTOR ---------------
+
+
+
+
+  // -------- For countries dropdown list search ------------
+
+  private searchCountries(country): any {
+
+    this.httpService.searchCountries(this.dbTable, this.countryColumn, country)
+      .subscribe(data => {
+        this.mainProcessorService.getListData(
+          data, this.dropDownTable, this.targetProperty, this.targetElementId, this.targetElementName);
+        this.dataLength = data.length;
+        this.dataSource.data = data;
+        },
+        (err: HttpErrorResponse) => {
+          console.log(err.error);
+          console.log(err.message);
+          this.messagesService.openDialog('Error mc-countries', 'Database access error.');
+        });
+  }
+
+
+
+
+  // Called from tags-section component.
+  // Send tag id from tags-section to search processor with table config.
+
+  public getSubCatResults(skillId) {
+    this.httpService.getSubCatResults(skillId, this.column, this.dbTable)
+    .subscribe(data => {
+          this.mainProcessorService.getListData(
+          data, this.dropDownTable, this.targetProperty, this.targetElementId, this.targetElementName);
+          this.dataLength = data.length;
+          this.dataSource.data = data;
+        },
+        (err: HttpErrorResponse) => {
+          console.log(err.error);
+          console.log(err.message);
+          this.messagesService.openDialog('Error getSubCat', 'Database access error.');
+        });
+  }
+
+
+  // ----------- SELECT BOX ---------------
+
+
+  // Called each time a checkbox is checked in the mat table.
+  public selectData(selectedData: number) {
+    // push the id's into an array then call it with the button.
+    return this.idArray.push(selecteddata);
+  }
+  //   |
+  //   |
+  //   |
+  //   V
+
+  // Called by the Show Selected button.
+  public getAllSelected() {
+    this.dataArray = [];
+    const tempArray = [];
+    const ds = this.dataSource.data;
+    const property = 'data_id';
+
+
+    this.idArray.forEach(function (id, i) {
+
+      // Need to match ids in idArray with dataSource.data.
+       const dataId: number = id;  // Extracts data id from selection array.
+
+      // Search dataSource for each data_id and push those selected into a new data object.
+      ds.forEach(function (data, index) {
+
+        if (ds[index][property] === dataId) {
+          tempArray.push(data);
+        }
+      });
+    });
+
+    this.idArray = []; // Empty the array for the next query.
+    this.dataArray = tempArray;
+    this.paginator.pageIndex = 0;
+    this.dataSource.data = this.dataArray;
+  }
+
+}
+
+

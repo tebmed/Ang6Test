@@ -1,0 +1,32 @@
+
+
+
+<h2 mat-dialog-title fxLayoutAlign="space-around center">Add Data</h2>
+
+<section mat-dialog-content>
+
+  <app-add-edit-form></app-add-edit-form>
+
+
+  <div fxLayout="row" fxLayoutAlign="space-around center">
+
+    <button [disabled]="!addDataForm.addEditDataForm.valid" mat-raised-button (click)="save(addDataForm)">Save New Data</button>
+    <button mat-raised-button (click)="reset()">Reset Form</button>
+
+  </div>
+
+  <br><br>
+
+</section>
+
+<br><br>
+
+<div mat-dialog-actions fxLayoutAlign="space-around center">
+
+  <button mat-dialog-close md-raised-button (click)="dialogRef.close()">Close</button>
+
+</div>
+
+
+
+

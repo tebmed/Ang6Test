@@ -1,0 +1,55 @@
+<mat-card-content>
+  <form [formGroup]="addEditDataForm"
+        (ngSubmit)="onSubmit(addEditDataForm.value)"
+        [class.error]="!addEditDataForm.valid && addEditDataForm.touched">
+
+    <ul class="items">
+
+      <li>
+        <label class="label-pad"> originalTitle: </label>
+        <mat-form-field class="inputBackground">
+          <input matInput #originalTitle maxlength="30" class="inputField" type="text" id="originalTitle"
+                 formControlName="originalTitle" [errorStateMatcher]="matcher" required>
+          <mat-hint align="end">{{originalTitle.value?.length || 0}}/30</mat-hint>
+          <mat-error>{{ errors.required }}</mat-error>
+        </mat-form-field>
+      </li>
+
+
+      <li><label class="label-pad"> startYear : </label>
+        <mat-form-field class="inputBackground">
+          <input matInput #startYear maxlength="30" class="inputField" type="text" id="startYear"
+                 formControlName="startYear" [errorStateMatcher]="matcher" required>
+          <mat-hint align="end">{{startYear.value?.length || 0}}/30</mat-hint>
+          <mat-error>{{ errors.required }}</mat-error>
+        </mat-form-field>
+      </li>
+      <li><label class="label-pad"> genres : </label>
+        <mat-form-field class="inputBackground">
+          <input matInput #genres maxlength="30" 
+                 class="inputField" type="text" id="genres"
+                 formControlName="genres" 
+                 [errorStateMatcher]="matcher" required 
+                 (blur)="validateUsername(genres.value)">
+
+          <mat-hint align="end">{{genres.value?.length || 0}}/30</mat-hint>
+
+          <div class="formError" *ngIf = "this.inDatabase === true">
+            This data already exists in our database</div>
+
+          <mat-error>{{ errors.required }}</mat-error>
+
+        </mat-form-field>
+      </li>
+      <br>
+
+    </ul>
+
+    <div *ngIf="!addEditDataForm.valid"
+         class="ui error message">All fields require information.</div>
+
+  </form>
+
+</mat-card-content>
+
+

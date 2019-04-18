@@ -1,0 +1,68 @@
+<section class="searchSection">
+  <!--
+	<div fxLayout="row" fxLayoutAlign="space-around center">
+
+
+		<button mat-raised-button (click)="addRecord()">Add</button>
+  </div>
+  -->
+  <div fxLayout="row" fxLayoutAlign="space-around center">
+  
+         <!-- Last name query. -->
+        <div>
+        <mat-form-field id="searchField">
+          <input matInput (keyup)="searchTerm$.next($event.target.value)" placeholder="Search by title">          
+          <mat-hint align="center">Enter at least first 2 letters.</mat-hint>
+        </mat-form-field>
+        <mat-icon>search</mat-icon>
+        </div>
+
+        <!-- Last name query. -->
+        <div>
+        <mat-form-field id="searchField">
+          <input matInput (keyup)="searchTermYear$.next($event.target.value)" placeholder="Filter by year">
+          <mat-hint align="center">Enter at least 2 numbers. </mat-hint>
+        </mat-form-field>
+        <mat-icon>search</mat-icon>
+        </div>
+  </div>
+
+</section> <!-- End search section -->
+
+
+<section class='tableSection  mySection mat-elevation-z8'>
+   <mat-table class="matTable" [dataSource]="dataSource">
+   <ng-container matColumnDef="originalTitle">
+          <mat-header-cell *matHeaderCellDef> originalTitle</mat-header-cell>
+          <mat-cell *matCellDef="let row">  {{row.originalTitle}} </mat-cell>
+   </ng-container>
+
+      <ng-container matColumnDef="startYear">
+          <mat-header-cell *matHeaderCellDef> startYear </mat-header-cell>
+          <mat-cell *matCellDef="let row">  {{row.startYear}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="genres">
+          <mat-header-cell *matHeaderCellDef> genres </mat-header-cell>
+          <mat-cell *matCellDef="let row">  {{row.genres}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="options">
+          <mat-header-cell *matHeaderCellDef> Options </mat-header-cell>
+          <mat-cell *matCellDef="let row">
+            <button mat-raised-button  class="deleteButton"   (click)="deleteRecord(row.id)">Delete</button>
+            <button mat-raised-button class="editButton" (click)="editRecord(row.id)">Edit</button>
+          </mat-cell>
+        </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+    </mat-table>
+
+    <mat-paginator #paginator
+                  [pageIndex]="0"
+                  [pageSize]="10"
+                  [pageSizeOptions]="[10, 25, 100]">
+    </mat-paginator>
+</section>
